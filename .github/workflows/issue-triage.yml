@@ -24,5 +24,5 @@ jobs:
               await github.rest.issues.addLabels({...context.repo, issue_number: context.issue.number, labels});
             } else if (labels.length) {
               await github.rest.issues.createComment({...context.repo, issue_number: context.issue.number,
-                body: `ラベルの候補: ${labels.map(l=>'`'+l+'`').join(' ')}（自動付与は現在オフです）`});
+                body: `ラベルの候補: ${labels.map(l=>'\`'+l+'\`').join(' ')}（自動付与は現在オフです）`});
             }

@@ -1,16 +1,26 @@
+# Dependabot の PR を自動マージするワークフロー。
+# 対象: 作者が dependabot[bot] の非 Draft PR の全部（メジャー更新を含む）。
+# 前提: 対象リポジトリの Settings > General > Pull Requests で
+#       "Allow auto-merge" を有効化しておくこと（docs/dependabot-auto-merge.md 参照）。
 name: Dependabot auto-merge
-on: [pull_request]
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
 permissions:
   contents: write
   pull-requests: write
 jobs:
-  automerge:
-    if: github.actor == 'dependabot[bot]'
+  auto-merge:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.draft == false
     steps:
-      - uses: actions/github-script@v9
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v3
         with:
-          script: |
-            const pr = context.payload.pull_request;
-            await github.rest.pulls.createReview({...context.repo, pull_number: pr.number, event: 'APPROVE'});
-            await github.rest.pulls.merge({...context.repo, pull_number: pr.number, merge_method: 'squash'});
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Enable auto-merge for Dependabot PRs
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
